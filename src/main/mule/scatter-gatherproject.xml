@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="6e5fedaf-c030-46a1-84f1-b2cb73509109" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="417efe89-07d5-4114-b223-34958785ccfb" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="Mysql@2022" database="cognizant" />
+	</db:config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="0ea55c0c-3085-46ad-8922-4a164c9e57e2" />
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="66ce6bf5-de1c-4c5d-8892-833612027628" basePath="/info" >
+		<http:request-connection host="localhost" port="8081" />
+	</http:request-config>
+	<flow name="scatter-gatherprojectFlow" doc:id="d1f6c055-6841-4b5a-8a79-b35cb94cd147" >
+		<http:listener doc:name="Listener" doc:id="5f4d2b05-d6cb-4053-b6b6-fdced3a5e1b1" config-ref="HTTP_Listener_config" path="scatter"/>
+		<logger level="INFO" doc:name="Logger" doc:id="4f0aee74-9486-4cf0-a233-da8fe5d79929" message='#[payload]'/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="6c5f2c46-bbbc-46a8-b918-2a691b90f15b" >
+			<route >
+				<try doc:name="Try" doc:id="78d636b7-36d9-44bf-a965-2be2b6c3bfc0" >
+					<http:request method="GET" doc:name="Request" doc:id="df43a977-b7cc-49f1-93ea-81bcc166178d" config-ref="HTTP_Request_configuration1" path="/info" />
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2e484851-e216-400c-a19b-0443e78c9650" >
+							<set-payload value="#[payload]" doc:name="Set Payload" doc:id="371f9b73-c079-49bf-b377-9c588df8e058" />
+						</on-error-continue>
+					</error-handler>
+				</try>
+				<logger level="INFO" doc:name="Logger" doc:id="d3e69a0d-0921-4062-9787-f099f6c24252" message='#[payload]'/>
+				<ee:transform doc:name="Transform Message" doc:id="fcae2868-6f98-4153-b1a7-20d10026c95e">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</route>
+			<route >
+				<try doc:name="Try" doc:id="60c7ff57-8a49-43a8-b52d-d78d083a030b" >
+					<db:select doc:name="Select" doc:id="bb655039-019a-4e51-8227-2f8ac4375482" config-ref="Database_Config">
+					<db:sql><![CDATA[select* from cognizant;]]></db:sql>
+				</db:select>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2a0b905a-49fb-4a4f-bed9-81ae1df63466" >
+							<set-payload value="#[payload]" doc:name="Set Payload" doc:id="52093015-de10-4239-a071-aabfe674d579" />
+						</on-error-continue>
+					</error-handler>
+				</try>
+				<logger level="INFO" doc:name="Logger" doc:id="5cefcefd-b0c0-47bc-acce-568d626a94ef" message='#[payload]'/>
+				<ee:transform doc:name="Transform Message" doc:id="7653d868-5072-4e83-9ef1-216acec62d2e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</route>
+		</scatter-gather>
+		<logger level="INFO" doc:name="Logger" doc:id="2c49bbfd-50b7-41e2-9be8-8d1dbbb74769" message='#[payload]'/>
+		<ee:transform doc:name="Transform Message" doc:id="596eba44-7435-419d-8ff5-af0c6b29b21b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
